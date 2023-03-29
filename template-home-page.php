@@ -161,21 +161,24 @@ $term_page_link = get_field('term_page_link', 'option');
         $headline = get_sub_field('headline_cars_by_category');
         $cars = get_sub_field('category_cars');
 
+        $category_cars = get_sub_field('category_cars_taxonomy');
         $link = get_sub_field('link_cars_by_category');
-        // $args = array(
-        //   'post_type'      => 'products',
-        //   'posts_per_page' => 6,
-        //   'tax_query' => array(
-        //     'relation' => 'AND',
-        //     array(
-        //         'taxonomy' => 'products-tag',
-        //         'field'    => 'term_id',
-        //         'terms'    => array($category_cars),
-        //         'operator' => 'IN',
-        //     ),
-        //   ),
-        // );
-        // $query = new WP_Query( $args );
+
+        $args = array(
+          'post_type'      => array( 'cars', 'products' ),
+          'posts_per_page' => 6,
+          'tax_query' => array(
+            'relation' => 'AND',
+            array(
+                'taxonomy' => 'products-tag',
+                'field'    => 'term_id',
+                'terms'    => array($category_cars),
+                'operator' => 'IN',
+            ),
+          ),
+        );
+        $query = new WP_Query( $args );
+
       ?>
       <div class="cars-listing">
         <div class="container">
@@ -237,11 +240,71 @@ $term_page_link = get_field('term_page_link', 'option');
             </div>
             <?php
               endforeach;
+            else:
+              ?>      
+            <?php
+            if ( $query->have_posts() ):
+              while ( $query->have_posts() ):
+                $query->the_post();
+                $img_url = get_the_post_thumbnail_url(get_the_ID(),'medium');
+                $author_id = get_the_author_ID();
+                $avatar = get_field('user_logo', 'user_'. $author_id);
+                ?>
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+              <div class="car-box">
+                <div class="car-box-img">
+                  <a class="link-img" href="<?= get_permalink(); ?>"><img class="img-fluid" src="<?= ($img_url)? $img_url:$placeholder; ?>" alt="<?= get_the_title(); ?>"></a>
+                </div>
+                <div class="car-box-content">
+                  <h4 class="text-uppercase"><?= get_the_title(); ?></h4>
+                  <div class="information">
+                    <span class="price"><?= the_field('price'); ?> <?= the_field('currency_pricing', 'option'); ?></span>
+                    <span class="author">
+                      <a class="logo-author" href="<?php echo get_author_posts_url($author_id); ?>"><img class="img-fluid" src="<?= ($avatar)? $avatar:$placeholder; ?>" alt="<?= the_author_meta( 'display_name', $author_id ); ?>"></a>
+                    </span>
+                  </div>
+                </div>
+                <div class="overlay">
+                  <div class="specifications">
+                    <?php 
+                    $rows = get_field('specifications' );
+                    if( $rows ) {
+                      $first_row = $rows[0];
+                      $first_text = $first_row['text_specifications'];
+                      $first_icon = $first_row['icon_specifications'];
+                      $two_row = $rows[1];
+                      $two_text = $two_row['text_specifications'];
+                      $two_icon = $two_row['icon_specifications'];
+                    }
+                    ?>
+
+                    <?php if($first_row): ?>
+                      <div class="spec-icon">
+                        <i class="<?=  $first_icon ?> text-primary mr-1"></i>
+                        <span><?=  $first_text; ?></span>
+                      </div>
+                    <?php endif; ?>
+
+                    <?php if($two_row): ?>
+                      <div class="spec-icon">
+                        <i class="<?=  $two_icon; ?> text-primary mr-1"></i>
+                        <span><?=  $two_text; ?></span>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <?php
+              endwhile;
             endif;
               ?>      
-        
+            <?php wp_reset_postdata(); ?>
+        <?php endif;?>
           </div>
-          <div class="link"><a class="btn btn-primary" href="<?= $link; ?>">شاهد جميع السيارات</a></div> 
+          <?php if($link): ?>
+            <div class="link"><a class="btn btn-primary" href="<?= $link; ?>">شاهد جميع السيارات</a></div> 
+          <?php endif; ?>
         </div>
       </div>
     <?php endwhile; ?>

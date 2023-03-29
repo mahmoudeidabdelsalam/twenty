@@ -20,9 +20,8 @@ if ($query->have_posts()):
     $installment = get_field('vendor_cars_installment', 'user_'. $author_id);
     $user_logo = get_field('user_logo', 'user_'. $author_id);
 
-    $car_price = get_field('price', $car_id ) * 0.015 + get_field('price', $car_id );
-    
-    $car_price = number_format($car_price, 0, '.', ',');
+    $car_price = get_field('price', $car_id );
+    $galleries = get_field('car_galleries', $car_id);
 
     $term_obj_list = get_the_terms( get_the_ID(), 'basic-brand' );
     $brands = join(', ', wp_list_pluck($term_obj_list, 'name'));
@@ -65,6 +64,12 @@ if ($query->have_posts()):
         <div class="container pb-3">
           <div class="row align-items-center pb-2 d-flex" style="flex-wrap: wrap;align-items: flex-start;">
 
+          <?php if(get_field('sold_done')): ?>
+            <div class="sold-done">
+              <p><img class="img-fluid" src="<?= get_theme_file_uri().'/assets/img/pay_done.png' ?>" alt="تم البياع" /></p>
+            </div>
+          <?php endif; ?>
+
             <div class="col-lg-8 mb-4 order-1 col-12">
               <?php if(get_field('sold_done')): ?>
                 <div class="sold-done">
@@ -72,16 +77,22 @@ if ($query->have_posts()):
                 </div>
               <?php endif; ?>
               <h1 class="display-4 text-uppercase"><?= the_title(); ?></h1>
-              <span class="number-car"><b>حالة السيارة</b> #<?= $$tag; ?></span>
+              <span class="number-car"><b>حالة السيارة</b> #<?= $tag; ?></span>
               <span class="number-car"><b>موديل</b> #<?= $model; ?></span>
               <span class="number-car"><b>رقم الاعلان</b> #<?= $car_id; ?>-<?= get_the_ID(); ?></span>
 
               <div class="content-carousel single-carousel-car">
                 <div class="owl-carousel owl-interior">
-                    <div><img class="img-fluid" src="<?= $featured_img_url; ?>" alt="<?= the_title(); ?>"></div>
+                  <div><img class="img-fluid" src="<?= $featured_img_url; ?>" alt="<?= the_title(); ?>"></div>
+                  <?php if($images): ?>
                   <?php foreach( $images as $image ):?>
                     <div><img src="<?= $image['url']; ?>" alt="slide"></div>
                   <?php endforeach; ?>
+                  <?php elseif($galleries): ?>
+                    <?php foreach( $galleries as $image ): ?>
+                      <div><img src="<?= $image['url']; ?>" alt="slide"></div>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
                 </div>
               </div>
 
@@ -147,6 +158,10 @@ if ($query->have_posts()):
 
               <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">بيانات السيارة</a></li>
+                            <?php if($installment == 'installment'): ?>
+              <li role="presentation" class=""><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">اقساط</a></li>
+              <li role="presentation" class=""><a href="#calculator" aria-controls="calculator" role="tab" data-toggle="tab">حاسبة الاقساط</a></li>
+            <?php endif; ?>
               </ul>
 
               <div class="tab-content">
@@ -166,6 +181,104 @@ if ($query->have_posts()):
                   <?php endif; ?> 
                   </div>
                 </div>
+
+                <div role="tabpanel" class="tab-pane" id="profile">
+                  <div class="list-finance">
+                    <p><span>مدة القسط</span>  <span>60</span> شهر</p>
+                    <p><span>الدفعة الأولى</span> <span class="the-first-batch"></span> <?= get_field('currency_pricing', 'option'); ?></p>
+                    <p><span>القسط</span> <span class="the-finance-month"></span> <?= get_field('currency_pricing', 'option'); ?></p>
+                    <p><span>الدفعة الأخيرة</span> <span class="the-last-batch"></span> <?= get_field('currency_pricing', 'option'); ?></p>                             
+                  </div>
+                  <h3>كيف تمول سيارتك</h3>
+                  <div class="col-steps">
+                    <?php
+                    if( have_rows('steps_finance_car', 'option') ):
+                      while( have_rows('steps_finance_car', 'option') ) : the_row();
+                    ?>
+                      <div class="bg-light p-4">
+                        <p><?= the_sub_field('text_step_finance'); ?></p>
+                        <img src="<?= the_sub_field('icon_step_finance'); ?>" alt="">
+                      </div>
+                      <?php endwhile; ?>
+                    <?php endif; ?> 
+                  </div>
+
+                  <?php $form_id_finance = get_field('form_id_finance', 'option'); ?>
+                  
+                  <!-- Button trigger modal -->
+                  <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">
+                    لطلب تمويل
+                  </button>
+
+                  <!-- Modal -->
+                  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                          <h4 class="modal-title" id="myModalLabel"> لطلب تمويل</h4>
+                        </div>
+                        <div class="modal-body">
+                        <?=  do_shortcode( '[gravityform id="'.$form_id_finance.'" title="false" description="false" ajax="true"]' ); ?>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">الغاء</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div role="tabpanel" class="tab-pane" id="calculator">
+                  <h5>حاسبة تقريبة للاقساط</h5>
+                  <p>يمكنك تعديل فترة القسط و الدفعة الاولي للحصول علي القسط المنناسب</p>
+                  <div class="list-finance">
+                    <p><span>مدة القسط</span>  <span>60</span> شهر</p>
+                    <p><span>الدفعة الأولى</span> <span class="the-first-batch"></span> <?= get_field('currency_pricing', 'option'); ?></p>
+                    <p><span>القسط</span> <span class="the-finance-month"></span> <?= get_field('currency_pricing', 'option'); ?></p>
+                    <p><span>الدفعة الأخيرة</span> <span class="the-last-batch"></span> <?= get_field('currency_pricing', 'option'); ?></p>
+                  </div>
+
+                  <div class="installment-account">
+                    <div class="group-input">
+                      <div class="d-flex">
+                        <label for="month">مدة القسط</label>
+                        <select name="month" id="month">
+                          <option value="0">اختر</option>
+                          <option value="60">60 شهور</option>
+                          <option value="48">48 شهر</option>
+                          <option value="36">36 شهر</option>
+                          <option value="24">24 شهر</option>
+                          <option value="12">12 شهر</option>
+                        </select>
+                      </div>
+                      <div class="d-flex">
+                      <label for="month">الدفعة الأولى</label>
+                        <input type="number" id="price">                        
+                      </div>
+                      <div class="d-flex">
+                        <button id="calculation">حساب القسط <i class="fa fa-calculator"></i></button>
+                      </div>
+                      <div class="response">
+                        <div id="month">
+                          <b>مدة القسط :</b> <span></span>
+                        </div>
+                        <div id="first_batch">
+                          <b>الدفعة الأولى:</b> <span></span>
+                        </div>
+                        <div id="last_batch">
+                          <b>الدفعة الأخيرة:</b> <span></span>
+                        </div>
+                        <div id="monthly_installment">
+                          <b>القسط الشهري:</b> <span></span>
+                        </div>                            
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                                
               </div>
             </div>
 
@@ -241,6 +354,67 @@ if ($query->have_posts()):
       <script type="text/javascript" >
       jQuery(function ($) {
 
+
+        function financial(x) {
+          return Number.parseFloat(x).toFixed(3);
+        }
+
+        function numberWithCommas(x) {
+          var parts = x.toString().split(".");
+          parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,".");
+          return parts.join(",");
+        }
+
+        $('#calculation').on('click', function () {
+          var month = $('#month').find(":selected").val();
+          if(month === '0') {
+            month = 60
+          }
+          var year = month / 12;
+
+          var price = <?= $car_price; ?>;  //السعر النقدي للسيارة
+
+          var first_batch = $('#price').val(); // الدفعة المقدمة
+              first_batch = numberWithCommas(first_batch);
+
+          var last_batch = price * 0.25; // الدفعة الأخيرة
+
+          var Profit_Ratio = 4.85; // نسبة الربح
+          var insurance_percentage = 3.9; // نسبة التأمين
+
+          var price_before_tax = price * 100 / 115; //السعر قبل الضريبة 
+          var profits = ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 * year) + ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 * year)*15/100; // الأرباح
+          var insurance = (price - last_batch) * insurance_percentage/100*5; // التأمين
+
+          var monthly_installment = (price - first_batch - last_batch  + profits + insurance) / month;  // القسط الشهري
+
+          $('#first_batch span').html('يبدأ من ' + financial(first_batch));
+          $('#monthly_installment span').html('يبدأ من ' + financial(monthly_installment));
+          $('#last_batch span').html('يبدأ من ' + financial(last_batch));
+          $('#month span').html('يبدأ من ' + month);
+        });
+
+
+        $( window ).load(function() {
+          var price = <?= $car_price; ?>;  //السعر النقدي للسيارة
+          var first_batch = price * 0.1; // الدفعة المقدمة
+          var last_batch = price * 0.25; // الدفعة الأخيرة
+
+          var Profit_Ratio = 4.85; // نسبة الربح
+          var insurance_percentage = 3.9; // نسبة التأمين
+
+          var price_before_tax = price * 100 / 115; //السعر قبل الضريبة 
+          var profits = ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 *5) + ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 *5)*15/100; // الأرباح
+          var insurance = (price - last_batch) * insurance_percentage/100*5; // التأمين
+
+          var monthly_installment = (price - first_batch - last_batch  + profits + insurance) / 60;  // القسط الشهري
+
+          $('.the-first-batch').html('يبدأ من ' + financial(first_batch));
+          $('.the-finance-month').html('يبدأ من ' + financial(monthly_installment));
+          $('.the-last-batch').html('يبدأ من ' + financial(last_batch));
+        });
+
+        
         $('#countable_link').on('click', function () {
           var post_id = <?php echo get_the_ID(); ?>;
           var action = 'link_click_counter';
@@ -370,7 +544,6 @@ if ($query->have_posts()):
     }    
     .car-information {
         justify-content: stretch;
-        display: flex;
         flex-flow: wrap;
         margin-bottom: 70px;
         border-bottom: 1px solid #d97e00;

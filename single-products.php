@@ -99,16 +99,49 @@ if (have_posts()) {
                 </div>
             </div>
 
-          <div class="content-car" style="margin-bottom:15px;display:inline-block;width:100%;">
+          <div class="content-car" style="margin-top:0;display:inline-block;width:100%;">
+            <div class="col-12 mb-5 p-0 d-print-none sharing-buttons">
+              <!-- Sharingbutton Facebook -->
+              <a class="share-icon" href="https://facebook.com/sharer/sharer.php?u=<?= get_the_permalink($post->ID) ?>" target="_blank" aria-label="Facebook">
+                <div class="sharing-button sharing-button--facebook sharing-button--medium">
+                  <i class="fa fa-facebook"></i>
+                </div>
+              </a>
+              <!-- Sharingbutton Twitter -->
+              <a class="share-icon" href="https://twitter.com/intent/tweet/?text=<?= get_the_title($post->ID) ?>.&amp;url=<?= get_the_permalink($post->ID) ?>" target="_blank" aria-label="Twitter">
+                <div class="sharing-button sharing-button--twitter sharing-button--medium">
+                  <i class="fa fa-twitter"></i>
+                </div>
+              </a>
+              <!-- Sharingbutton E-Mail -->
+              <a class="share-icon" href="mailto:?subject=<?= get_the_title($post->ID) ?>.&amp;body=<?= get_the_permalink($post->ID) ?>" target="_self" aria-label="E-Mail">
+                <div class="sharing-button sharing-button--mail sharing-button--medium">
+                  <i class="fa fa-envelope"></i>
+                </div>
+              </a>
+              <!-- Sharingbutton LinkedIn -->
+              <a class="share-icon" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=<?= get_the_permalink($post->ID) ?>&amp;title=<?= get_the_title($post->ID) ?>.&amp;summary=<?= get_the_title($post->ID) ?>.&amp;source=<?= get_the_permalink($post->ID) ?>" target="_blank" aria-label="LinkedIn">
+                <div class="sharing-button sharing-button--linkedin sharing-button--medium">
+                  <i class="fa fa-linkedin"></i>
+                </div>
+              </a>
+              <!-- Sharingbutton WhatsApp -->
+              <a class="share-icon" href="whatsapp://send?text=<?= get_the_title($post->ID) ?>.%20<?= get_the_permalink($post->ID) ?>" target="_blank" aria-label="WhatsApp">
+                <div class="sharing-button sharing-button--whatsapp sharing-button--medium">
+                  <i class="fa fa-whatsapp"></i>
+                </div>
+              </a>
+            </div>
+
             <?= the_content(); ?>
           </div>
 
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">بيانات السيارة</a></li>
-            <!--<?php if($installment == 'installment'): ?>-->
-            <!--  <li role="presentation" class=""><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">اقساط</a></li>-->
-            <!--  <li role="presentation" class=""><a href="#calculator" aria-controls="calculator" role="tab" data-toggle="tab">حاسبة الاقساط</a></li>-->
-            <!--<?php endif; ?>-->
+            <?php if($installment == 'installment'): ?>
+              <li role="presentation" class=""><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">اقساط</a></li>
+              <li role="presentation" class=""><a href="#calculator" aria-controls="calculator" role="tab" data-toggle="tab">حاسبة الاقساط</a></li>
+            <?php endif; ?>
             <?php if ( $query_checking->have_posts() ): ?>
               <li role="presentation" class=""><a href="/car-checking/?car_id=<?= get_the_ID(); ?>">الفحص</a></li>
             <?php endif; ?>
@@ -356,96 +389,67 @@ if (have_posts()) {
   <!-- Vendor End -->
 
   <script type="text/javascript" >
+
   jQuery(function ($) {
 
-    <?php if($terms[0]->term_id): ?>
+    function financial(x) {
+      return Number.parseFloat(x).toFixed(3);
+    }
 
-      $('#calculation').on('click', function () {
-        var price = Number(<?= get_field('price'); ?>);
-        var month = $('#month').find(":selected").val();
-        if(month === '0') {
-          month = 60
-        }
-        var first_batch =  $('#price').val();
-        $('#first_batch span').html('يبدأ من ' + first_batch);
+    function numberWithCommas(x) {
+      var parts = x.toString().split(".");
+      parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,".");
+      return parts.join(",");
+    }
 
-        var last_batch = price * 0.25
-        $('#last_batch span').html('يبدأ من ' + last_batch);
+    $('#calculation').on('click', function () {
+      var month = $('#month').find(":selected").val();
+      if(month === '0') {
+        month = 60
+      }
+      var year = month / 12;
 
-        var subtotal = price * 7.5 / 100;
+      var price = <?= get_field('price'); ?>;  //السعر النقدي للسيارة
 
-        var total = price - first_batch - last_batch + subtotal;
+      var first_batch = $('#price').val(); // الدفعة المقدمة
+          first_batch = numberWithCommas(first_batch);
 
-        console.log(total);
+      var last_batch = price * 0.25; // الدفعة الأخيرة
 
-        var monthly_installment = total / month;
-        $('#monthly_installment span').html('يبدأ من ' + Math.round(monthly_installment));
+      var Profit_Ratio = 4.85; // نسبة الربح
+      var insurance_percentage = 3.9; // نسبة التأمين
 
-        $('#month span').html('يبدأ من ' + month);
-      });
+      var price_before_tax = price * 100 / 115; //السعر قبل الضريبة 
+      var profits = ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 * year) + ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 * year)*15/100; // الأرباح
+      var insurance = (price - last_batch) * insurance_percentage/100*5; // التأمين
 
+      var monthly_installment = (price - first_batch - last_batch  + profits + insurance) / month;  // القسط الشهري
 
-      $( window ).load(function() {
-        var price = Number(<?= get_field('price'); ?>); 
-
-        var first_batch = price * 0.1;
-        var last_batch = price * 0.25;
-
-        var cost = (price * 7.5 / 100) + 3000;
-        var total = price - first_batch - last_batch + cost;
-
-        var monthly_installment = total / 60;
-
-        $('.the-first-batch').html('يبدأ من ' + first_batch);
-        $('.the-finance-month').html('يبدأ من ' + Math.round(monthly_installment));
-        $('.the-last-batch').html('يبدأ من ' + Math.round(last_batch));
-      });
-
-    <?php else: ?>
-
-      $('#calculation').on('click', function () {
-        var price = Number(<?= get_field('price'); ?>);
-        var month = $('#month').find(":selected").val();
-        if(month === '0') {
-          month = 60
-        }
-        var first_batch =  $('#price').val();
-        $('#first_batch span').html('يبدأ من ' + first_batch);
-
-        var last_batch = price * 0.25
-        $('#last_batch span').html('يبدأ من ' + last_batch);
-
-        var subtotal = price * 11.5 / 100;
-
-        var total = price - first_batch - last_batch + subtotal;
-
-        console.log(total);
-
-        var monthly_installment = total / month;
-        $('#monthly_installment span').html('يبدأ من ' + Math.round(monthly_installment));
-
-        $('#month span').html('يبدأ من ' + month);
-      });
+      $('#first_batch span').html('يبدأ من ' + financial(first_batch));
+      $('#monthly_installment span').html('يبدأ من ' + financial(monthly_installment));
+      $('#last_batch span').html('يبدأ من ' + financial(last_batch));
+      $('#month span').html('يبدأ من ' + month);
+    });
 
 
-      $( window ).load(function() {
-        var price = Number(<?= get_field('price'); ?>); 
+    $( window ).load(function() {
+      var price = <?= get_field('price'); ?>;  //السعر النقدي للسيارة
+      var first_batch = price * 0.1; // الدفعة المقدمة
+      var last_batch = price * 0.25; // الدفعة الأخيرة
 
-        var first_batch = price * 0.1;
-        var last_batch = price * 0.25;
+      var Profit_Ratio = 4.85; // نسبة الربح
+      var insurance_percentage = 3.9; // نسبة التأمين
 
-        var cost = (price * 11.5 / 100) + 3000;
-        var total = price - first_batch - last_batch + cost;
+      var price_before_tax = price * 100 / 115; //السعر قبل الضريبة 
+      var profits = ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 *5) + ((price_before_tax - first_batch - last_batch)*Profit_Ratio/100 *5)*15/100; // الأرباح
+      var insurance = (price - last_batch) * insurance_percentage/100*5; // التأمين
 
-        var monthly_installment = total / 60;
+      var monthly_installment = (price - first_batch - last_batch  + profits + insurance) / 60;  // القسط الشهري
 
-        $('.the-first-batch').html('يبدأ من ' + first_batch);
-        $('.the-finance-month').html('يبدأ من ' + monthly_installment);
-        $('.the-last-batch').html('يبدأ من' + Math.round(last_batch));
-      });
-
-    <?php endif; ?>
-
+      $('.the-first-batch').html('يبدأ من ' + financial(first_batch));
+      $('.the-finance-month').html('يبدأ من ' + financial(monthly_installment));
+      $('.the-last-batch').html('يبدأ من ' + financial(last_batch));
+    });
 
 
 

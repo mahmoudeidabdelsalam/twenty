@@ -339,6 +339,9 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
           $('#child_brand').append(response);
           $('.loading').hide();
         },
+        error: function(response) {
+          $('.loading').hide();
+        }
       });
     });
 
@@ -361,6 +364,10 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
           $('#model').append(response);
           $('.loading').hide();
         },
+        error: function(response) {
+          alert('no model');
+          $('.loading').hide();
+        }
       });
     });
 
@@ -383,6 +390,10 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
           $('#cars').append(response);
           $('.loading').hide();
         },
+        error: function(response) {
+          alert('no cars');
+          $('.loading').hide();
+        }
       });
     });
 

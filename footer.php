@@ -8,11 +8,8 @@
     <footer id="footer">
       <div class="container">
         <div class="row">
-          <div class="col-sm-4 col-xs-12 text-left">
-            <img style="max-width: 120px" src="<?= get_field('logo_footer', 'option'); ?>" alt="logo footer">
-          </div>
-
-          <div class="col-sm-8 col-xs-12 text-right">
+          <div class="col-sm-2 col-xs-12 text-left"></div>
+          <div class="col-sm-8 col-xs-12 text-center">
             <p><?= get_field('copy_right', 'option'); ?></p>
             <ul class="social-icons">
               <?php
@@ -20,16 +17,16 @@
                 while( have_rows('social_media', 'option') ) : the_row();
               ?>
                 <li>
-                  <a href="<?= get_sub_field('link_social_media'); ?>"><i class="<?= get_sub_field('icon_social_media'); ?>"></i></a>
+                  <a href="<?= get_sub_field('link_social_media'); ?>"><i class="<?= get_sub_field('icon_social_media'); ?> fa-lg"></i></a>
                 </li>
               <?php
                 endwhile;
               endif;
               ?>
             </ul>
+            <img style="max-width: 120px" src="<?= get_field('logo_footer', 'option'); ?>" alt="logo footer">
           </div>
-
-
+          <div class="col-sm-2 col-xs-12 text-left"></div>
         </div>
       </div>
     </footer>

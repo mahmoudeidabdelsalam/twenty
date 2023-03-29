@@ -1717,28 +1717,28 @@ if( function_exists('acf_add_local_field_group') ):
             'append' => '',
             'maxlength' => '',
           ),
-          // array(
-          //   'key' => 'field_629b481fa2815',
-          //   'label' => 'اختر نوع التصنيف',
-          //   'name' => 'category_cars',
-          //   'type' => 'taxonomy',
-          //   'instructions' => '',
-          //   'required' => 0,
-          //   'conditional_logic' => 0,
-          //   'wrapper' => array(
-          //     'width' => '',
-          //     'class' => '',
-          //     'id' => '',
-          //   ),
-          //   'taxonomy' => 'products-tag',
-          //   'field_type' => 'select',
-          //   'allow_null' => 0,
-          //   'add_term' => 0,
-          //   'save_terms' => 0,
-          //   'load_terms' => 0,
-          //   'return_format' => 'id',
-          //   'multiple' => 0,
-          // ),
+          array(
+            'key' => 'field_629b481fa2815',
+            'label' => 'اختر نوع التصنيف',
+            'name' => 'category_cars_taxonomy',
+            'type' => 'taxonomy',
+            'instructions' => '',
+            'required' => 0,
+            'conditional_logic' => 0,
+            'wrapper' => array(
+              'width' => '',
+              'class' => '',
+              'id' => '',
+            ),
+            'taxonomy' => 'products-tag',
+            'field_type' => 'select',
+            'allow_null' => 0,
+            'add_term' => 0,
+            'save_terms' => 0,
+            'load_terms' => 0,
+            'return_format' => 'id',
+            'multiple' => 0,
+          ),
 
           array(
             'key' => 'field_6377cb9834b2d',
@@ -1763,7 +1763,7 @@ if( function_exists('acf_add_local_field_group') ):
               1 => 'taxonomy',
             ),
             'return_format' => 'object',
-            'min' => 5,
+            'min' => '',
             'max' => 6,
             'elements' => '',
           ),
@@ -3727,6 +3727,22 @@ function link_click_counter() {
 
     die;
 }
+
+
+add_action('wp_ajax_delete_cars_slod', 'delete_cars_slod', 0);
+add_action('wp_ajax_nopriv_delete_cars_slod', 'delete_cars_slod');
+
+function delete_cars_slod() {
+
+    if ( isset( $_POST['post_ids'] ) ) {
+      foreach ($_POST['post_ids'] as $key => $value) {
+        wp_delete_post( (int)$value, true); 
+      }
+    }
+
+    die;
+}
+
 
 /*
 Plugin Name: ajax child brand
