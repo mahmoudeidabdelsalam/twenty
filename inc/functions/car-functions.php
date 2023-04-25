@@ -224,6 +224,142 @@ function ajax_child_basic_brand() {
 }
 
 /*
+  Plugin Name: ajax products-brand brand
+*/
+add_action('wp_ajax_ajax_products_brand', 'ajax_products_brand', 0);
+add_action('wp_ajax_nopriv_ajax_products_brand', 'ajax_products_brand');
+
+function ajax_products_brand() {
+    if ( isset( $_POST['parent_id'] ) ) {
+      $categories=  get_categories('parent='.$_POST['parent_id'].'&hide_empty=1&taxonomy=products-brand');
+      if($categories) {
+          foreach ($categories as $cat) {
+              $option .= '<option value="'.$cat->term_id.'">';
+              $option .= $cat->cat_name;
+              $option .= '</option>';
+          }
+          echo '<option value="0" selected="selected">اختار الماركة</option>'.$option;
+          die();
+      } else {
+          echo '<option value="0" selected="selected">لا يوجد ماركة</option>';
+      }
+    }
+    die;
+}
+
+/*
+Plugin Name: ajax child products brand
+*/
+add_action('wp_ajax_ajax_child_products_brand', 'ajax_child_products_brand', 0);
+add_action('wp_ajax_nopriv_ajax_child_basic_brand', 'ajax_child_products_brand');
+
+function ajax_child_products_brand() {
+    if ( isset( $_POST['parent_id'] ) ) {
+
+      $args = array(
+        'post_type' => 'products',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+          'relation' => 'AND',
+          array(
+            'taxonomy' => 'products-brand',
+            'field' => 'term_id',
+            'terms' => $_POST['parent_id'],
+          ),
+          array(
+            'taxonomy' => 'products-tag',
+            'field' => 'term_id',
+            'terms' => $_POST['tag_type'],
+          ),
+        ),
+      );
+      $the_query = new WP_Query( $args );
+
+      $terms = [];
+      if ( $the_query->have_posts() ) {
+        while ( $the_query->have_posts() ) {
+          $the_query->the_post();
+          $term_obj = get_the_terms( get_the_ID(), 'products-group' );
+          $terms[$term_obj[0]->term_id] = $term_obj[0];
+        }
+      }
+
+      $categories = $terms;
+      if($categories) {
+          foreach ($categories as $cat) {
+              $option .= '<option value="'.$cat->term_id.'">';
+              $option .= $cat->name;
+              $option .= '</option>';
+          }
+          echo '<option value="0" selected="selected">اختار الفئه</option>'.$option;
+          die();
+      } else {
+          echo '<option value="0" selected="selected">لا يوجد الفئه</option>';
+      }
+    }
+    die;
+}
+
+
+
+
+/*
+  Plugin Name: ajax color_selected
+*/
+add_action('wp_ajax_ajax_color_selected', 'ajax_color_selected', 0);
+add_action('wp_ajax_nopriv_ajax_color_selected', 'ajax_color_selected');
+
+function ajax_color_selected() {
+    if ( isset( $_POST['tag_id'] ) ) {
+      $args = array(
+        'post_type' => 'products',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+          'relation' => 'AND',
+          array(
+            'taxonomy' => 'products-tag',
+            'field' => 'term_id',
+            'terms' => $_POST['tag_id'],
+          ),
+        ),
+      );
+      $the_query = new WP_Query( $args );
+
+      $colors = [];
+      if ( $the_query->have_posts() ) {
+        while ( $the_query->have_posts() ) {
+          $the_query->the_post();
+          $colors[] = get_field('color_car');
+        }
+      }
+
+      $arr_colors = array_unique($colors);
+      if($arr_colors) {
+        foreach ($arr_colors as $color) {
+          if(empty($color)) {
+            $option .= '<option value="0">';
+            $option .= 'جميع الالوان';
+            $option .= '</option>';
+          } else {
+            $option .= '<option value="'.$color.'">';
+            $option .= $color;
+            $option .= '</option>';
+          }
+        }
+          echo '<option value="0" selected="selected">اختار اللون</option>'.$option;
+          die();
+      } else {
+          echo '<option value="0" selected="selected">اي لون</option>';
+      }
+
+    }
+    die;
+}
+
+
+
+
+/*
   Plugin Name: ajax car
 */
 add_action('wp_ajax_ajax_child_car', 'ajax_child_car', 0);
@@ -1097,6 +1233,9 @@ function formatPost(&$post){
 
 function pn_upload_files() {
   //Do the nonce security check
+
+  $current_user = wp_get_current_user();
+  
   if ( !isset($_POST['mynonce']) || !wp_verify_nonce( $_POST['mynonce'], 'myuploadnonce' ) ) {
       //Send the security check failed message
       _e( 'Security Check Failed', 'pixelnet' ); 
@@ -1118,7 +1257,12 @@ function pn_upload_files() {
               $file_id = media_handle_upload( 'myfilefield', 0 );              
               if ( !is_wp_error( $file_id ) ) {
                   $attachment_image = wp_get_attachment_url( $file_id );
-                  echo $file_id;
+
+                  if ($_POST['type'] == "logo") {
+                    update_field( 'user_logo',  $file_id, 'user_'.$current_user->ID );
+                  }
+
+                  echo $attachment_image;
               }
           }
           if ( isset($_FILES['myfilefieldBg']['error']) && $_FILES['myfilefieldBg']['error'] == 0 ) {
@@ -1130,7 +1274,10 @@ function pn_upload_files() {
             $file_id = media_handle_upload( 'myfilefieldBg', 0 );              
             if ( !is_wp_error( $file_id ) ) {
                 $attachment_image = wp_get_attachment_url( $file_id );
-                echo $file_id;
+                    if ($_POST['type'] == 'background') {
+                      update_field( 'user_background',  $file_id, 'user_'.$current_user->ID );
+                    }
+                echo $attachment_image;
             }
         }
       }

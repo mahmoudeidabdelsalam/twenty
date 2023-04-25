@@ -126,7 +126,7 @@ if (!class_exists('\\BootstrapBasic4\\BootstrapBasic4')) {
             wp_enqueue_script('jquery-inview-min', get_template_directory_uri() . '/assets/js/jquery.inview.min.js', true);
             wp_enqueue_script('wow-min', get_template_directory_uri() . '/assets/js/wow.min.js', true);
             wp_enqueue_script('jquery-isotope-min', get_template_directory_uri() . '/assets/js/jquery.isotope.min.js', true);
-            // wp_enqueue_script('magnific-popup-min', get_template_directory_uri() . '/assets/js/magnific-popup.min.js', true);
+            wp_enqueue_script('multiselect-dropdown', get_template_directory_uri() . '/assets/js/multiselect-dropdown.js', true);
             wp_enqueue_script('custom-scripts', get_template_directory_uri() . '/assets/js/custom-scripts.js', true);
             wp_enqueue_script('bootstrap-notify.min', get_template_directory_uri() . '/assets/js/bootstrap-notify.min.js', true);
             

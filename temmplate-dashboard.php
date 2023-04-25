@@ -106,9 +106,12 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
         <div class="col-lg-6 col-md-6 px-2 pull-right uploads">
           <h6 class="is-require">صورة الشعار</h6>
           <form id="myform" class="form" method="post" action="" enctype="multipart/form-data">
-            <label for="myfilefield"><img src="<?= $user_logo; ?>" alt="logo">  <span>لرفع الصورة اظغط هنا</span> </label>
+            <label for="myfilefield">
+              <img id="img_logo" src="<?= $user_logo; ?>" alt="logo">  <span>لرفع الصورة اظغط هنا <i class="fa fa-cloud-upload" aria-hidden="true"></i></span> 
+            </label>
             <input type="file" id="myfilefield" name="myfilefield" class="form-control hidden" value="">
             <input type="hidden" id="user_logo">
+            <input type="hidden" name="type" value="logo">
             <?php wp_nonce_field( 'myuploadnonce', 'mynonce' );?>
             <button type="submit" class="btn btn-primary">تغير الصورة</button>
           </form>
@@ -117,9 +120,12 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
         <div class="col-lg-6 col-md-6 px-2 pull-right uploads">
           <h6 class="is-require">صورة الخلفية</h6>
           <form id="myformBg" class="form" method="post" action="" enctype="multipart/form-data">
-            <label for="myfilefieldBg"><img src="<?= $user_logo_Bg; ?>" alt="logo">  <span>لرفع الصورة اظغط هنا</span> </label>
+            <label for="myfilefieldBg">
+              <img id="img_background" src="<?= $user_logo_Bg; ?>" alt="logo">  <span>لرفع الصورة اظغط هنا  <i class="fa fa-cloud-upload" aria-hidden="true"></i></span>
+            </label>
             <input type="file" id="myfilefieldBg" name="myfilefieldBg" class="form-control hidden" value="">
             <input type="hidden" id="user_logo_Bg">
+            <input type="hidden" name="type" value="background">
             <?php wp_nonce_field( 'myuploadnonce', 'mynonce' );?>
             <button type="submit" class="btn btn-primary">تغير الصورة</button>
           </form>
@@ -129,7 +135,7 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
 
         <div class="insert_car row" id="user-action">
           <div class="col-lg-3 col-md-6 px-2 pull-right">
-            <button class="btn btn-submit" id="SubmitUser">للمراجعات</button>
+            <button class="btn btn-submit" id="SubmitUser">تعديل</button>
           </div>
         </div>
       </div>
@@ -494,14 +500,13 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
             beforeSend: function () {
               $('.loading').show();
             },
-            success: function(data, textStatus, jqXHR) {
-              console.log( jqXHR );
-              $('#user_logo').val(jqXHR.responseJSON);
+            success: function(response) {
+              $("#img_logo").attr("src", response.responseText);
               $('.loading').hide();
             },
-            error: function(jqXHR, textStatus, errorThrown){
-                console.log(jqXHR);
-                $('#user_logo').val(jqXHR.responseJSON);
+            error: function(response){
+                $('.loading').hide();
+                $("#img_logo").attr("src", response.responseText);
             }
         });
       });
@@ -523,28 +528,25 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
             beforeSend: function () {
               $('.loading').show();
             },
-            success: function(data, textStatus, jqXHR) {
-              console.log( jqXHR );
-              $('#user_logo_Bg').val(jqXHR.responseJSON);
+            success: function(response) {
+              $("#img_background").attr("src", response.responseText);
               $('.loading').hide();
             },
-            error: function(jqXHR, textStatus, errorThrown){
-                console.log(jqXHR);
-                $('#user_logo_Bg').val(jqXHR.responseJSON);
+            error: function(response){
+                $('.loading').hide();
+                $("#img_background").attr("src", response.responseText);
             }
         });
       });
 
           // update user content
     $('#SubmitUser').on('click', function () {
-      var user_name     = $('#user_name').val();
-      var user_address  = $('#user_address').val();
-      var user_phone    = $('#user_phone').val();
-      var user_whats    = $('#user_whats').val();
-      var user_map      = $('#user_map').val();
-      var user_content  = $('#user_content').val();
-      var user_logo     = $('#user_logo').val();
-      var user_background     = $('#user_logo_Bg').val();
+      var user_name           = $('#user_name').val();
+      var user_address        = $('#user_address').val();
+      var user_phone          = $('#user_phone').val();
+      var user_whats          = $('#user_whats').val();
+      var user_map            = $('#user_map').val();
+      var user_content        = $('#user_content').val();
       var action = 'get_update_user';
       $.ajax({
         url: "<?= admin_url( 'admin-ajax.php' ); ?>",
@@ -557,8 +559,6 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
           user_whats: user_whats,
           user_map: user_map,
           user_content: user_content,
-          user_logo:user_logo,
-          user_background: user_background,
         },
         beforeSend: function () {
           $('.loading').show();
@@ -694,12 +694,6 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
         padding: 30px 0;
     }
   }
-  .uploads label span {
-      display: block;
-      font-size: 12px;
-      text-align: center;
-  }
-
   .uploads img {
       max-width: 100%;
   }

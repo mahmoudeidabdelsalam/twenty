@@ -1,26 +1,33 @@
 <?php
 get_header(); 
 $placeholder = get_theme_file_uri().'/assets/img/placeholder.png';
-$paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
-$brand    = isset($_GET['brand']) ? $_GET['brand'] : '0';
-$parent    = isset($_GET['parent']) ? $_GET['parent'] : '0';
-$model    = isset($_GET['model']) ? $_GET['model'] : '0';
-$group    = isset($_GET['group']) ? $_GET['group'] : '0';
-$price    = isset($_GET['price']) ? $_GET['price'] : '0';
+
+$paged    = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
+
+
+$brand        = isset($_GET['parent_brand_id']) ? $_GET['parent_brand_id'] : '0';
+$child_brand  = isset($_GET['child_brand_id']) ? $_GET['child_brand_id'] : '0';
+$model_id     = isset($_GET['model_id']) ? $_GET['model_id'] : '0';
+$model        = isset($_GET['model']) ? $_GET['model'] : '0';
+
+$price_from   = isset($_GET['price_from']) ? $_GET['price_from'] : '0';
+$price_to     = isset($_GET['price_to']) ? $_GET['price_to'] : '0';
+$walkway      = isset($_GET['walkway']) ? $_GET['walkway'] : '0';
+$colors       = isset($_GET['colors']) ? $_GET['colors'] : '0';
+
+$per_page = 21;
+
+if($price_from && $price_to) {
+  $per_page = -1;
+}
 
 $tax = $wp_query->get_queried_object();
 
 $args = array(
   'post_type'        => array( 'cars', 'products' ),
-  'posts_per_page' => 21,
+  'posts_per_page' => $per_page,
   'paged' => $paged,
 );
-
-if($price != '0') {
-  $args['meta_key'] = 'price';
-  $args['orderby'] = 'meta_value_num';
-  $args['order'] = $price;
-}
 
 $taxonomies = get_terms( array(
   'taxonomy' => 'products-brand',
@@ -49,7 +56,7 @@ $args['tax_query'] = array(
   ),
 );
 
-if( $brand &&  $model == 0) {
+if( $brand && $child_brand == 0 && $model == 0 ) {
   $args['tax_query'] = array(
     'relation' => 'AND',
     array(
@@ -63,15 +70,32 @@ if( $brand &&  $model == 0) {
       'terms'    => $tax->term_id,
     ),
   );
-}
-
-if( $group ) {
+} elseif( $child_brand && $model_id == 0 && $model == 0 ) {
   $args['tax_query'] = array(
     'relation' => 'AND',
+    array(
+      'taxonomy' => 'products-brand',
+      'field'    => 'term_id',
+      'terms'    => $child_brand,
+    ),
+    array(
+      'taxonomy' => 'products-tag',
+      'field'    => 'term_id',
+      'terms'    => $tax->term_id,
+    ),
+  );
+} elseif ($model_id && $model == 0) {
+  $args['tax_query'] = array(
+    'relation' => 'AND',
+    array(
+      'taxonomy' => 'products-brand',
+      'field'    => 'term_id',
+      'terms'    => $child_brand,
+    ),
     array(
       'taxonomy' => 'products-group',
       'field'    => 'term_id',
-      'terms'    => $group,
+      'terms'    => $model_id,
     ),
     array(
       'taxonomy' => 'products-tag',
@@ -79,234 +103,281 @@ if( $group ) {
       'terms'    => $tax->term_id,
     ),
   );
-}
-
-if( $parent &&  $brand == 0) {
+} elseif($child_brand && $model_id && $model) {
   $args['tax_query'] = array(
     'relation' => 'AND',
     array(
       'taxonomy' => 'products-brand',
       'field'    => 'term_id',
-      'terms'    => $parent,
+      'terms'    => $child_brand,
+    ),    
+    array(
+      'taxonomy' => 'products-group',
+      'field'    => 'term_id',
+      'terms'    => $model_id,
     ),
     array(
       'taxonomy' => 'products-tag',
       'field'    => 'term_id',
       'terms'    => $tax->term_id,
     ),
-  );
-}
-
-if( $model && $brand != 0 ) {
-  $args['tax_query'] = array(
-    'relation' => 'AND',
     array(
       'taxonomy' => 'products-model',
       'field'    => 'term_id',
       'terms'    => $model,
     ),
-    array(
-      'taxonomy' => 'products-tag',
-      'field'    => 'term_id',
-      'terms'    => $tax->term_id,
-    ),    
-  );
-}
-
-
-if( $model != 0 && $brand != 0 ) {
-  $args['tax_query'] = array(
-    'relation' => 'AND',
-    array(
-      'taxonomy' => 'products-model',
-      'field'    => 'term_id',
-      'terms'    => $model,
-    ),
-    array(
-      'taxonomy' => 'products-brand',
-      'field'    => 'term_id',
-      'terms'    => $brand,
-    ),  
-    array(
-      'taxonomy' => 'products-tag',
-      'field'    => 'term_id',
-      'terms'    => $tax->term_id,
-    ),    
   );
 }
 
 $query = new WP_Query( $args );
-
 $image = get_field('icon_term', $tax);
 ?>
 
 <!-- Page Header Start -->
-<div class="container-fluid page-header-tags">
+<div class="container-fluid page-header-tags p-0">
   <img src="<?= $image; ?>" alt="banner">
   <h1 class="display-3 text-uppercase text-white mb-3"><?= $tax->name; ?></h1>
 </div>
-<!-- Page Header Start -->
-<div class="with-sidebar-right">
-  <div class="row">
-    <div class="col-md-12 col-12">
-      <section class="contsct-us-info mt-5 mb-5">
 
-          <div class="row m-0">
-          
-            <div class="col-md-2 col-12 pt-2">
-              <div class="ads-finance">
-                <a href="<?= the_field('ads_link_real', 'option'); ?>"><img src="<?= the_field('ads_images_real', 'option'); ?>" alt="ads"></a>
-              </div>
-            </div>
+<!-- Page section -->
 
-            <div class="col-md-8 col-12">
-            <form action="" method="get" class="mb-5 float-right">
-                <div class="row">
-                  <div class="col-lg-2 col-md-6 px-2 pull-right">
-                    <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="parent_brand" name="parent">
-                      <option value="0">على حسب العلامة تجاريه</option>
-                      <?php 
-                        foreach ($taxonomies as $term): 
-                          if( $term->parent == 0 ):
-                        ?>
-                        <option value="<?= $term->term_id; ?>" <?= ($term->term_id == $parent)? 'selected':'';?>><?= $term->name; ?></option>
-                      <?php 
-                          endif;
-                        endforeach; 
-                        ?>
-                    </select>
-                  </div>
-                  <div class="col-lg-2 col-md-6 px-2 pull-right">
-                    <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="child_brand"  name="brand">
-                      <option value="0">على حسب الماركة</option>
-                      <?php 
-                        $categories=  get_categories('child_of='.$parent.'&hide_empty=1&taxonomy=products-brand');
-                        foreach ($categories as $term): 
-                        ?>
-                        <option value="<?= $term->term_id; ?>" <?= ($term->term_id == $brand)? 'selected':'';?>><?= $term->name; ?></option>
-                      <?php 
-                        endforeach; 
-                        ?>
-                    </select>
-                  </div>
-                  <div class="col-lg-2 col-md-6 px-2">
-                    <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" name="price">
-                      <option value="0">حسب السعر</option>
-                      <option value="ASC" <?= ($price == 'ASC')? 'selected':'';?>>اقل سعر </option>
-                      <option value="DESC" <?= ($price == 'DESC')? 'selected':'';?>>اعالي سعر </option>
-                    </select>
-                  </div>                  
-                  <div class="col-lg-2 col-md-6 px-2 pull-right">
-                    <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;"  name="model">
-                      <option value="0">على حسب الموديل</option>
-                      <?php foreach ($taxonomies_model as $term_model): ?>
-                        <option value="<?= $term_model->term_id; ?>" <?= ($term_model->term_id == $model)? 'selected':'';?>><?= $term_model->name; ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>  
-                  <div class="col-lg-2 col-md-6 px-2 pull-right">
-                    <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;"  name="model">
-                      <option value="0">على حسب الفئه</option>
-                      <?php foreach ($taxonomies_group as $term_group): ?>
-                        <option value="<?= $term_group->term_id; ?>" <?= ($term_group->term_id == $group)? 'selected':'';?>><?= $term_group->name; ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>                  
-                  <div class="col-lg-2 col-md-6 px-2">
-                      <button class="btn btn-primary btn-block mb-3" type="submit" style="height: 50px;">بحث</button>
-                  </div>
-                </div>
-              </form>
+<section class="contsct-us-info mt-5 mb-5">
+  <div class="row m-0">
+    
+    <div class="col-md-3 col-12 pt-2">
+      <div class="ads-finance">
+        <a href="<?= the_field('ads_link_real', 'option'); ?>"><img src="<?= the_field('ads_images_real', 'option'); ?>" alt="ads"></a>
+      </div>
 
-              <div class="row">
-              <?php
-                if ( $query->have_posts() ):
-                  while ( $query->have_posts() ):
-                    $query->the_post();
-                    $img_url = get_the_post_thumbnail_url(get_the_ID(),'full');
-                    $author_id = get_the_author_ID();
-                    $avatar = get_field('user_logo', 'user_'. $author_id);
+      <div class="search-cars">
+        <form action="" method="get" class="mb-5 mt-5 float-right">
+          <div class="row">
+
+            <div class="col-lg-12 col-md-12 px-2 pull-right custom-dropdown">
+              <div class="dropdown custom-select px-4 mb-3">
+                <button id="parent_brand" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height: 50px; width: 100%;">
+                  <b id="parent_brand_text">العلامة تجاريه</b>
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="parent_brand">
+                  <?php 
+                    foreach ($taxonomies as $term): 
+                      if( $term->parent == 0 ):
+                      $image = get_field('icon_term', $term);
                     ?>
-            <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
-              <?php if(get_field('sold_done')): ?>
-                <div class="sold-done" style="position: absolute;z-index: 9;left: 15px;background: #d97e00e6;padding: 30px;bottom: 0;right: 15px;top: 0;pointer-events: none;">
-                  <p><img class="img-fluid" src="<?= get_theme_file_uri().'/assets/img/pay_done.png' ?>" alt="تم البياع" /></p>
-                </div>
-              <?php endif; ?>              
-              <div class="car-box">
-                <div class="car-box-img">
-                  <a class="link-img" href="<?= get_permalink(); ?>"><img class="img-fluid" src="<?= ($img_url)? $img_url:$placeholder; ?>" alt="<?= get_the_title(); ?>"></a>
-                </div>
-                <div class="car-box-content">
-                  <h4 class="text-uppercase"><?= get_the_title(); ?></h4>
-                  <div class="information">
-                    <span class="price"><?= the_field('price'); ?> <?= the_field('currency_pricing', 'option'); ?></span>
-                    <span class="author">
-                      <a class="logo-author" href="<?php echo get_author_posts_url($author_id); ?>"><img class="img-fluid" src="<?= ($avatar)? $avatar:$placeholder; ?>" alt="<?= the_author_meta( 'display_name', $author_id ); ?>"></a>
-                    </span>
-                  </div>
-                </div>
-                <div class="overlay">
-                  <div class="specifications">
-                    <?php 
-                      $rows = get_field('specifications' );
-                      if( $rows ) {
-                        $first_row = $rows[0];
-                        $first_text = $first_row['text_specifications'];
-                        $first_icon = $first_row['icon_specifications'];
-                        $two_row = $rows[1];
-                        $two_text = $two_row['text_specifications'];
-                        $two_icon = $two_row['icon_specifications'];
-                      }
-                    ?>
-
-                    <?php if($first_row): ?>
-                      <div class="spec-icon">
-                        <i class="<?=  $first_icon ?> text-primary mr-1"></i>
-                        <span><?=  $first_text; ?></span>
-                      </div>
-                    <?php endif; ?>
-
-                    <?php if($two_row): ?>
-                      <div class="spec-icon">
-                        <i class="<?=  $two_icon; ?> text-primary mr-1"></i>
-                        <span><?=  $two_text; ?></span>
-                      </div>
-                    <?php endif; ?>
-                  </div>
-                </div>
-              </div>
-            </div>
-                <?php
-                  endwhile;
-                  ?>
-                  <div class="col-md-12 mt-5">
-                    <?php echo custom_base_pagination(array(), $query); ?>
-                  </div>
-                  <?php else: ?>
-                  <div class="alert alert-danger" role="alert">لا يوجد نتائج للبحث برجاء تغير حقول البحث</div>              
-                <?php endif; wp_reset_postdata(); ?>
+                    <li>
+                      <input type="radio" name="parent_brand_id" id="parent_brand_id<?= $term->term_id; ?>" data-text="<?= $term->name; ?>" value="<?= $term->term_id; ?>">
+                      <label for="parent_brand_id<?= $term->term_id; ?>"><?= $term->name; ?> <img width="64" src="<?= $image; ?>" alt="<?= $term->name; ?>"></label>                      
+                    </li>
+                  <?php 
+                      endif;
+                    endforeach; 
+                ?>
+                </ul>
               </div>
             </div>
 
-            <div class="col-md-2 col-12 pt-2">
-              <div class="ads-finance">
-                <a href="<?= the_field('ads_link_real_2', 'option'); ?>"><img src="<?= the_field('ads_images_real_2', 'option'); ?>" alt="ads"></a>
-              </div>
+            <div class="col-lg-12 col-md-12 px-2 pull-right">
+              <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="child_brand"  name="child_brand_id">
+                <option value="0">الماركة</option>
+              </select>
+            </div>
+            
+            <div class="col-lg-12 col-md-12 px-2 pull-right">
+              <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="model"  name="model_id">
+                <option value="0">الفئه</option>
+              </select>
             </div>
 
+            <div class="col-lg-12 col-md-12 px-2 pull-right">
+              <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;"  name="model">
+                <option value="0">سنة الصنع</option>
+                <?php foreach ($taxonomies_model as $term_model): ?>
+                  <option value="<?= $term_model->term_id; ?>" <?= ($term_model->term_id == $model)? 'selected':'';?>><?= $term_model->name; ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            
+            <div class="col-lg-12 col-md-12 px-2 pull-right">
+              <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="colors"  name="colors">
+                <option value="0">جميع الالوان</option>
+              </select>
+            </div>
+
+            <div class="col-lg-12 col-md-12 px-2 inputs-group">
+              <label>السعر</label>
+              <input type="number" name="price_from"  placeholder="من" id="price_from">
+              <input type="number" name="price_to" placeholder="الي" id="price_to">
+            </div>
+
+            <div class="col-lg-12 col-md-12 px-2 inputs-group">
+              <label>الممشى</label>
+              <input type="number" name="walkway" placeholder="بالكيلو" id="walkway">
+            </div>
+
+            <div class="col-lg-12 col-md-12 px-2">
+                <button class="btn btn-primary btn-block mb-3" type="submit" style="height: 50px;">أظهر النتائج</button>
+            </div>
+
+            <div class="loading" style="display: none;">
+              <div class="sk-chase">
+                <div class="sk-chase-dot"></div>
+                <div class="sk-chase-dot"></div>
+                <div class="sk-chase-dot"></div>
+                <div class="sk-chase-dot"></div>
+                <div class="sk-chase-dot"></div>
+                <div class="sk-chase-dot"></div>
+              </div>
+            </div>
+            
           </div>
+        </form>
+      </div>
 
-      </section>
+      <div class="ads-finance">
+        <a href="<?= the_field('ads_link_real_2', 'option'); ?>"><img src="<?= the_field('ads_images_real_2', 'option'); ?>" alt="ads"></a>
+      </div>
     </div>
+
+    <div class="col-md-9 col-12">
+      <div class="row">
+      <?php
+        if ( $query->have_posts() ):
+          while ( $query->have_posts() ):
+            $query->the_post();
+            $img_url = get_the_post_thumbnail_url(get_the_ID(),'full');
+            $author_id = get_the_author_ID();
+            $avatar = get_field('user_logo', 'user_'. $author_id);
+
+            $price = get_field('price');
+
+            if($price_from && $price_to  && $price >= $price_from && $price <= $price_to):
+
+        ?>
+          <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+            <?php if(get_field('sold_done')): ?>
+              <div class="sold-done" style="position: absolute;z-index: 9;left: 15px;background: #d97e00e6;padding: 30px;bottom: 0;right: 15px;top: 0;pointer-events: none;">
+                <p><img class="img-fluid" src="<?= get_theme_file_uri().'/assets/img/pay_done.png' ?>" alt="تم البياع" /></p>
+              </div>
+            <?php endif; ?>              
+            <div class="car-box">
+              <div class="car-box-img">
+                <a class="link-img" href="<?= get_permalink(); ?>"><img class="img-fluid" src="<?= ($img_url)? $img_url:$placeholder; ?>" alt="<?= get_the_title(); ?>"></a>
+              </div>
+              <div class="car-box-content">
+                <h4 class="text-uppercase"><?= get_the_title(); ?></h4>
+                <div class="information">
+                  <span class="price"><?= the_field('price'); ?> <?= the_field('currency_pricing', 'option'); ?></span>
+                  <span class="author">
+                    <a class="logo-author" href="<?php echo get_author_posts_url($author_id); ?>"><img class="img-fluid" src="<?= ($avatar)? $avatar:$placeholder; ?>" alt="<?= the_author_meta( 'display_name', $author_id ); ?>"></a>
+                  </span>
+                </div>
+              </div>
+              <div class="overlay">
+                <div class="specifications">
+                  <?php 
+                    $rows = get_field('specifications' );
+                    if( $rows ) {
+                      $first_row = $rows[0];
+                      $first_text = $first_row['text_specifications'];
+                      $first_icon = $first_row['icon_specifications'];
+                      $two_row = $rows[1];
+                      $two_text = $two_row['text_specifications'];
+                      $two_icon = $two_row['icon_specifications'];
+                    }
+                  ?>
+
+                  <?php if($first_row): ?>
+                    <div class="spec-icon">
+                      <i class="<?=  $first_icon ?> text-primary mr-1"></i>
+                      <span><?=  $first_text; ?></span>
+                    </div>
+                  <?php endif; ?>
+
+                  <?php if($two_row): ?>
+                    <div class="spec-icon">
+                      <i class="<?=  $two_icon; ?> text-primary mr-1"></i>
+                      <span><?=  $two_text; ?></span>
+                    </div>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php elseif($price_from == '0' && $price_to == '0'): ?>
+          <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+            <?php if(get_field('sold_done')): ?>
+              <div class="sold-done" style="position: absolute;z-index: 9;left: 15px;background: #d97e00e6;padding: 30px;bottom: 0;right: 15px;top: 0;pointer-events: none;">
+                <p><img class="img-fluid" src="<?= get_theme_file_uri().'/assets/img/pay_done.png' ?>" alt="تم البياع" /></p>
+              </div>
+            <?php endif; ?>              
+            <div class="car-box">
+              <div class="car-box-img">
+                <a class="link-img" href="<?= get_permalink(); ?>"><img class="img-fluid" src="<?= ($img_url)? $img_url:$placeholder; ?>" alt="<?= get_the_title(); ?>"></a>
+              </div>
+              <div class="car-box-content">
+                <h4 class="text-uppercase"><?= get_the_title(); ?></h4>
+                <div class="information">
+                  <span class="price"><?= the_field('price'); ?> <?= the_field('currency_pricing', 'option'); ?></span>
+                  <span class="author">
+                    <a class="logo-author" href="<?php echo get_author_posts_url($author_id); ?>"><img class="img-fluid" src="<?= ($avatar)? $avatar:$placeholder; ?>" alt="<?= the_author_meta( 'display_name', $author_id ); ?>"></a>
+                  </span>
+                </div>
+              </div>
+              <div class="overlay">
+                <div class="specifications">
+                  <?php 
+                    $rows = get_field('specifications' );
+                    if( $rows ) {
+                      $first_row = $rows[0];
+                      $first_text = $first_row['text_specifications'];
+                      $first_icon = $first_row['icon_specifications'];
+                      $two_row = $rows[1];
+                      $two_text = $two_row['text_specifications'];
+                      $two_icon = $two_row['icon_specifications'];
+                    }
+                  ?>
+
+                  <?php if($first_row): ?>
+                    <div class="spec-icon">
+                      <i class="<?=  $first_icon ?> text-primary mr-1"></i>
+                      <span><?=  $first_text; ?></span>
+                    </div>
+                  <?php endif; ?>
+
+                  <?php if($two_row): ?>
+                    <div class="spec-icon">
+                      <i class="<?=  $two_icon; ?> text-primary mr-1"></i>
+                      <span><?=  $two_text; ?></span>
+                    </div>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endif; ?>          
+        <?php endwhile; ?>
+          <div class="col-md-12 mt-5"><?php echo custom_base_pagination(array(), $query); ?></div>
+        <?php else: ?>
+          <div class="alert alert-danger" role="alert">لا يوجد نتائج للبحث برجاء تغير حقول البحث</div>              
+        <?php endif; wp_reset_postdata(); ?>
+      </div>
+    </div>
+
   </div>
-</div>
+</section>
 
 <script type="text/javascript" >
   jQuery(function ($) {
-    $('#parent_brand').on('change', function () {
-      var parent_id = $('#parent_brand').find(":selected").val();;
-      var action = 'ajax_child_brand';
+
+    // change parent brand
+    $('input[type=radio][name=parent_brand_id]').change(function() {
+      
+      var dataText = $(this).attr("data-text");
+      $('#parent_brand_text').html(dataText);
+
+      var parent_id = this.value;
+      var action = 'ajax_products_brand';
       $.ajax({
         url: "<?= admin_url( 'admin-ajax.php' ); ?>",
         type: 'post',
@@ -316,9 +387,61 @@ $image = get_field('icon_term', $tax);
         },
         beforeSend: function () {
           $('#child_brand').html("");
+          $('.loading').show();
         },
         success: function (response) {          
           $('#child_brand').append(response);
+          $('.loading').hide();
+        },
+        error: function(response) {
+          $('.loading').hide();
+        }
+      });
+    });
+
+    // change child model
+    $('#child_brand').on('change', function () {
+      var parent_id = $('#child_brand').find(":selected").val();
+      var tag_type =  <?= $tax->term_id; ?>;
+      var action = 'ajax_child_products_brand';
+      $.ajax({
+        url: "<?= admin_url( 'admin-ajax.php' ); ?>",
+        type: 'post',
+        data: {
+          action: action,
+          parent_id: parent_id,
+          tag_type: tag_type,
+        },
+        beforeSend: function () {
+          $('#model').html("");
+          $('.loading').show();
+        },
+        success: function (response) {          
+          $('#model').append(response);
+          $('.loading').hide();
+        },
+        error: function(response) {
+          alert('no model');
+          $('.loading').hide();
+        }
+      });
+    });
+
+    $( window ).load(function() {
+      var tag_id = <?= $tax->term_id; ?>;
+      var action = 'ajax_color_selected';
+      $.ajax({
+        url: "<?= admin_url( 'admin-ajax.php' ); ?>",
+        type: 'post',
+        data: {
+          action: action,
+          tag_id: tag_id,
+        },
+        beforeSend: function () {
+          $('#colors').html("");
+        },
+        success: function (response) {          
+          $('#colors').append(response);
         },
       });
     });
