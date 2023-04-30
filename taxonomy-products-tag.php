@@ -56,7 +56,7 @@ $args['tax_query'] = array(
   ),
 );
 
-if( $brand && $child_brand == 0 && $model == 0 ) {
+if( $brand && $child_brand == 0 && $model_id == 0 && $model == 0 ) {
   $args['tax_query'] = array(
     'relation' => 'AND',
     array(
@@ -103,9 +103,47 @@ if( $brand && $child_brand == 0 && $model == 0 ) {
       'terms'    => $tax->term_id,
     ),
   );
-} elseif($child_brand && $model_id && $model) {
+} elseif($brand && $model && $child_brand == 0) {
   $args['tax_query'] = array(
     'relation' => 'AND',
+    array(
+      'taxonomy' => 'products-brand',
+      'field'    => 'term_id',
+      'terms'    => $brand,
+    ),  
+    array(
+      'taxonomy' => 'products-tag',
+      'field'    => 'term_id',
+      'terms'    => $tax->term_id,
+    ),
+    array(
+      'taxonomy' => 'products-model',
+      'field'    => 'term_id',
+      'terms'    => $model,
+    ),
+  );
+} elseif($brand && $model && $child_brand && $model_id == 0)  {
+  $args['tax_query'] = array(
+    'relation' => 'AND',
+    array(
+      'taxonomy' => 'products-brand',
+      'field'    => 'term_id',
+      'terms'    => $child_brand,
+    ),
+    array(
+      'taxonomy' => 'products-tag',
+      'field'    => 'term_id',
+      'terms'    => $tax->term_id,
+    ),
+    array(
+      'taxonomy' => 'products-model',
+      'field'    => 'term_id',
+      'terms'    => $model,
+    ),
+  );
+}  elseif($brand && $model && $child_brand && $model_id)  {
+  $args['tax_query'] = array(
+    'relation' => 'AND',  
     array(
       'taxonomy' => 'products-brand',
       'field'    => 'term_id',
@@ -156,7 +194,22 @@ $image = get_field('icon_term', $tax);
             <div class="col-lg-12 col-md-12 px-2 pull-right custom-dropdown">
               <div class="dropdown custom-select px-4 mb-3">
                 <button id="parent_brand" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height: 50px; width: 100%;">
-                  <b id="parent_brand_text">العلامة تجاريه</b>
+                  <?php 
+                    if($brand): 
+                    $term_name = get_term( $brand )->name;
+                    $categories=  get_categories('parent='.$brand.'&hide_empty=1&taxonomy=products-brand');
+                    if($categories) {
+                        foreach ($categories as $cat) {
+                            $option .= '<option value="'.$cat->term_id.'">';
+                            $option .= $cat->cat_name;
+                            $option .= '</option>';
+                        }
+                    }
+                  ?>
+                    <b id="parent_brand_text"><?= $term_name; ?></b>
+                  <?php else: ?>
+                    <b id="parent_brand_text">العلامة تجاريه</b>
+                  <?php endif; ?>
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="parent_brand">
@@ -166,7 +219,7 @@ $image = get_field('icon_term', $tax);
                       $image = get_field('icon_term', $term);
                     ?>
                     <li>
-                      <input type="radio" name="parent_brand_id" id="parent_brand_id<?= $term->term_id; ?>" data-text="<?= $term->name; ?>" value="<?= $term->term_id; ?>">
+                      <input type="radio" name="parent_brand_id" id="parent_brand_id<?= $term->term_id; ?>" data-text="<?= $term->name; ?>" value="<?= $term->term_id; ?>" <?= ($term->term_id == $brand)? 'checked':'';?>>
                       <label for="parent_brand_id<?= $term->term_id; ?>"><?= $term->name; ?> <img width="64" src="<?= $image; ?>" alt="<?= $term->name; ?>"></label>                      
                     </li>
                   <?php 
@@ -179,13 +232,32 @@ $image = get_field('icon_term', $tax);
 
             <div class="col-lg-12 col-md-12 px-2 pull-right">
               <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="child_brand"  name="child_brand_id">
-                <option value="0">الماركة</option>
+                  <?php 
+                    if($child_brand): 
+                    $term_name = get_term( $child_brand )->name;
+                    ?>
+                     <option value="<?= $child_brand; ?>"><?= $term_name; ?></option>
+                     <?php echo $option; ?>
+                  <?php else: ?>
+                    <?php if($brand): ?>
+                      <?php echo '<option value="0" selected="selected">اختار الماركة</option>'.$option; ?>
+                    <?php else: ?>
+                      <option value="0">الماركة</option>
+                    <?php endif; ?>
+                  <?php endif; ?>
               </select>
             </div>
             
             <div class="col-lg-12 col-md-12 px-2 pull-right">
               <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="model"  name="model_id">
-                <option value="0">الفئه</option>
+                  <?php 
+                    if($model_id): 
+                    $term_model = get_term( $model_id )->name;
+                  ?>
+                    <option value="<?= $model_id; ?>"><?= $term_model; ?></option>
+                  <?php else: ?>
+                    <option value="0">الفئه</option>
+                  <?php endif; ?>
               </select>
             </div>
 
@@ -210,10 +282,12 @@ $image = get_field('icon_term', $tax);
               <input type="number" name="price_to" placeholder="الي" id="price_to">
             </div>
 
-            <div class="col-lg-12 col-md-12 px-2 inputs-group">
-              <label>الممشى</label>
-              <input type="number" name="walkway" placeholder="بالكيلو" id="walkway">
-            </div>
+            <?php if($tax->term_id != "17"): ?>
+              <div class="col-lg-12 col-md-12 px-2 inputs-group">
+                <label>الممشى (اقل من)</label>
+                <input type="number" name="walkway" placeholder="بالكيلو" id="walkway">
+              </div>
+            <?php endif; ?>
 
             <div class="col-lg-12 col-md-12 px-2">
                 <button class="btn btn-primary btn-block mb-3" type="submit" style="height: 50px;">أظهر النتائج</button>
@@ -304,7 +378,7 @@ $image = get_field('icon_term', $tax);
               </div>
             </div>
           </div>
-        <?php elseif($price_from == '0' && $price_to == '0'): ?>
+        <?php elseif(empty($price_from) || empty($price_to)): ?>
           <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
             <?php if(get_field('sold_done')): ?>
               <div class="sold-done" style="position: absolute;z-index: 9;left: 15px;background: #d97e00e6;padding: 30px;bottom: 0;right: 15px;top: 0;pointer-events: none;">
@@ -421,7 +495,7 @@ $image = get_field('icon_term', $tax);
           $('.loading').hide();
         },
         error: function(response) {
-          alert('no model');
+          alert(response);
           $('.loading').hide();
         }
       });

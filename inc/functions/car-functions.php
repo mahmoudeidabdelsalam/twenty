@@ -251,7 +251,7 @@ function ajax_products_brand() {
 Plugin Name: ajax child products brand
 */
 add_action('wp_ajax_ajax_child_products_brand', 'ajax_child_products_brand', 0);
-add_action('wp_ajax_nopriv_ajax_child_basic_brand', 'ajax_child_products_brand');
+add_action('wp_ajax_nopriv_ajax_child_products_brand', 'ajax_child_products_brand');
 
 function ajax_child_products_brand() {
     if ( isset( $_POST['parent_id'] ) ) {
@@ -274,30 +274,34 @@ function ajax_child_products_brand() {
         ),
       );
       $the_query = new WP_Query( $args );
-
-      $terms = [];
+            
+      $categories = [];
       if ( $the_query->have_posts() ) {
         while ( $the_query->have_posts() ) {
           $the_query->the_post();
           $term_obj = get_the_terms( get_the_ID(), 'products-group' );
-          $terms[$term_obj[0]->term_id] = $term_obj[0];
-        }
-      }
-
-      $categories = $terms;
-      if($categories) {
-          foreach ($categories as $cat) {
-              $option .= '<option value="'.$cat->term_id.'">';
-              $option .= $cat->name;
-              $option .= '</option>';
+          if ( ! is_wp_error( $term_obj ) ) {
+            $categories[$term_obj[0]->term_id] = $term_obj[0];
           }
-          echo '<option value="0" selected="selected">اختار الفئه</option>'.$option;
-          die();
+        }
+
+        if($categories) {
+            foreach ($categories as $cat) {
+                $option .= '<option value="'.$cat->term_id.'">';
+                $option .= $cat->name;
+                $option .= '</option>';
+            }
+            echo '<option value="0" selected="selected">اختار الفئه</option>'.$option;
+            die();
+        } else {
+            echo '<option value="0" selected="selected">لا يوجد الفئه</option>';
+            die();
+        }        
       } else {
-          echo '<option value="0" selected="selected">لا يوجد الفئه</option>';
+        echo '<option value="0" selected="selected">لا يوجد الفئه</option>';
+        die();
       }
     }
-    die;
 }
 
 

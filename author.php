@@ -58,12 +58,39 @@ $image = get_field('icon_term', $package_term);
         <div class="content-user col-md-6 col-12" style="background-color:#333; background-image:url(<?= $user_background; ?>);">
           
             <h1 class="display-3 text-uppercase text-dark"><?= $author->display_name; ?></h1>
-            <?php if($user_phone): ?>
-              <p><b>الهاتف</b> <a href="tel:<?= $user_phone; ?> "><?= $user_phone; ?> </a></p>
-            <?php endif; ?>
-            <?php if($user_whatsapp): ?>
-              <p><b>الواتس</b> <a href="tel:<?= $user_whatsapp; ?> "><?= $user_whatsapp; ?> </a></p>
-            <?php endif; ?>
+            <div class="row phones">
+              <?php if($user_phone): ?>
+                <b>الهاتف :</b>
+                <span><i class="fa fa-phone"></i> <a href="tel:<?= $user_phone; ?> "><?= $user_phone; ?> </a></span>
+              <?php endif; ?>
+
+              <?php
+                if( have_rows('user_phones', 'user_'. $author->ID) ):
+                  while ( have_rows('user_phones', 'user_'. $author->ID) ) : the_row(); 
+                ?>
+                  <span><i class="fa fa-phone"></i> <a href="tel:<?= the_sub_field('number_phone'); ?> "><?= the_sub_field('number_phone'); ?></a></span>
+                <?php 
+                  endwhile;
+                endif;
+              ?>
+            </div>
+            
+            <div class="row phones">
+              <?php if($user_whatsapp): ?>
+                <b>الواتس :</b>
+                <span><i class="fa fa-whatsapp"></i> <a href="https://wa.me/<?= $user_whatsapp; ?> "><?= $user_whatsapp; ?> </a></span>
+              <?php endif; ?>
+
+              <?php
+                if( have_rows('user_whatsapps', 'user_'. $author->ID) ):
+                  while ( have_rows('user_whatsapps', 'user_'. $author->ID) ) : the_row(); 
+                ?>
+                  <span><i class="fa fa-whatsapp"></i> <a href="https://wa.me/<?= the_sub_field('number_whatsapp'); ?> "><?= the_sub_field('number_whatsapp'); ?></a></span>
+                <?php 
+                  endwhile;
+                endif;
+              ?>
+            </div>
 
             <?php if($map): ?>
               <div class="map-user"><?= $map; ?> </div>
@@ -252,6 +279,19 @@ $image = get_field('icon_term', $package_term);
     background: #d97e00;
 }
 
+.phones span {
+    width: auto !important;
+    display: flex;
+    align-items: center;
+    margin: 10px 15px;
+}
+
+.phones span i {
+    margin: 0 10px;
+    border: 1px solid #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
 </style>
 <?php
 get_footer();
