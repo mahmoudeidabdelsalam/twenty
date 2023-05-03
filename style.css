@@ -1584,7 +1584,7 @@ h6,
 }
 
 .bg-banner {
-  background: linear-gradient(rgba(28, 30, 50, .9), rgba(28, 30, 50, .9)), url(../img/bg-banner.jpg);
+  background: linear-gradient(rgba(28, 30, 50, .9), rgba(28, 30, 50, .9));
   background-attachment: fixed;
 }
 

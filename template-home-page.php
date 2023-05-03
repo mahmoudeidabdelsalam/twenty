@@ -94,7 +94,7 @@ $term_page_link = get_field('term_page_link', 'option');
                     <p>
                       <span class="author">
                         <span><?= the_author_meta( 'display_name', $author_id ); ?></span>
-                        <a class="logo-author" href="<?php echo get_author_posts_url($author_id); ?>"><img class="img-fluid" src="<?= $avatar; ?>" alt="<?= the_author_meta( 'display_name', $author_id ); ?>"></a>
+                        <a class="logo-author" href="<?php echo get_author_posts_url($author_id); ?>"><img class="img-fluid" src="<?= ($avatar)? $avatar:$placeholder; ?>" alt="<?= the_author_meta( 'display_name', $author_id ); ?>"></a>
                       </span>
                     </p>
                   </div>
@@ -389,8 +389,7 @@ $term_page_link = get_field('term_page_link', 'option');
 
   <section id="portfolio">
 
-    <section id="gallery-1" data-section="gallery-1" class="data-section"
-      class="content-block section-wrapper gallery-1">
+    <section id="gallery-1" data-section="gallery-1" class="content-block section-wrapper gallery-1 data-section">
 
       <div class="container">
 
@@ -527,42 +526,6 @@ $term_page_link = get_field('term_page_link', 'option');
     </div>
   </section>
   <!--/#contact-us-->
-
-  <style>
-    section#brands .card .card-img-top a span {
-      color: #fff;
-      font-size: 22px;
-    }
-
-    #brands .card .img-placeholder a {
-      min-height: 90px;
-    }
-
-    section#brands .card .card-img-top {
-      margin-bottom: 20px;
-    }  
-    
-    section#brands .card .card-img-top  span.counter {
-      background: #d97e00;
-      position: absolute;
-      top: 0;
-      right: 33px;
-      color: #fff;
-      font-size: 11px;
-      padding: 2px 5px;
-    }
-
-    section#brands .card .card-img-top {
-      position: relative;
-      padding: 0 !important;
-    }    
-
-    section#brands .link {
-      margin: 30px auto 0 !important;
-      display: block;
-      text-align: center;
-    }    
-  </style>
 <?php
 get_footer();
 ?>

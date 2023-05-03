@@ -41,28 +41,15 @@
       <span>تواصل مع 20</span>
     </a>
 
-    <style>
-      .whatsapp-btn span {
-        display: block;
-        color: #fff;
-        text-shadow: 0 0 5px #000;
-      }
-      .whatsapp-btn {
-        text-align: center;
-      }
-
-      footer#footer .row {
-        display: flex;
-        align-items: center;
-        flex-flow: row-reverse;
-        justify-content: space-between;
-      }
-    </style>
-
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9C75P9"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=382207210761797&ev=PageView&noscript=1" alt="facebook pix"
+    /></noscript>
+
     <?php wp_footer(); ?> 
   </body>
 </html>
