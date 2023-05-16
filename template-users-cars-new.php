@@ -20,8 +20,6 @@ $taxonomies_package = get_terms( array(
   'parent'   => 0
 ) );
 
-
-// $users = get_users( array( 'role__in' => array( 'vendor' ) ) );
 // WP_User_Query arguments
 $args = array (
   'role' => 'vendor',
@@ -41,16 +39,22 @@ $args = array (
 
 if ($search) {
   $args = array (
+    'fields' => 'all',
     'search'         => '*'.esc_attr( $search ).'*',
-    'search_columns' => array( 'display_name', 'user_email' ),
+    'search_columns' => array( 'display_name' ),
     'role' => 'vendor',
     'order' => 'ASC',
     'orderby' => 'display_name',
     'meta_query' => array(
+      'relation' => 'OR',
       array(
           'key'     => 'vendor_cars_status',
-          'value'   => "used",
+          'value'   => "new",
           'compare' => 'LIKE'
+      ),
+      array(
+        'key' => 'vendor_cars_status',
+        'compare' => 'NOT EXISTS',
       ),
     )
   );
@@ -99,6 +103,7 @@ if( $city != 0 && $package != 0 ) {
 
 // Create the WP_User_Query object
 $wp_user_query = new WP_User_Query($args);
+
 // Get the results
 $users = $wp_user_query->get_results();
 ?>

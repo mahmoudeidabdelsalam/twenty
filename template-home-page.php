@@ -33,7 +33,15 @@ $term_page_link = get_field('term_page_link', 'option');
           <div class="carousel-caption">
             <div class="carousel-content">
               <?= get_sub_field('content_slider'); ?>
-              <p><a href="<?= get_sub_field('page_slider'); ?>">تواصل معنا الان</a></p>
+              <?php 
+              $link = get_sub_field('page_slider');
+              if( $link ): 
+                $link_url = $link['url'];
+                $link_title = $link['title'];
+                $link_target = $link['target'] ? $link['target'] : '_self'; 
+              ?>
+              <p><a href="<?php echo esc_url( $link_url ); ?>" target="<?php echo esc_attr( $link_target ); ?>"><?php echo esc_html( $link_title ); ?></a></p>
+              <?php endif; ?>
             </div>
           </div>
         </div>

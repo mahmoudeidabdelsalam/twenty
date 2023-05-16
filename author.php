@@ -283,13 +283,12 @@ $image = get_field('icon_term', $package_term);
     width: auto !important;
     display: flex;
     align-items: center;
-    margin: 10px 15px;
+    margin: 10px 5px;
 }
 
 .phones span i {
-    margin: 0 10px;
-    border: 1px solid #fff;
-    padding: 10px;
+    margin: 0;
+    padding: 5px;
     border-radius: 4px;
 }
 </style>

@@ -38,8 +38,9 @@ $args = array (
 
 if ($search) {
   $args = array (
+    'fields' => 'all',
     'search'         => '*'.esc_attr( $search ).'*',
-    'search_columns' => array( 'display_name', 'user_email' ),
+    'search_columns' => array( 'display_name' ),
     'role' => 'vendor',
     'order' => 'ASC',
     'orderby' => 'display_name',

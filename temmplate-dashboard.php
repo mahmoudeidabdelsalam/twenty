@@ -131,8 +131,6 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
           </form>
         </div>
 
-
-
         <div class="insert_car row" id="user-action">
           <div class="col-lg-3 col-md-6 px-2 pull-right">
             <button class="btn btn-submit" id="SubmitUser">تعديل</button>
@@ -219,7 +217,7 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
             <h6>اختار ادخال الصور</h6>
             <select class="custom-select px-4 mb-3" style="height: 50px; width: 100%;" id="car_img" name="car_img">
               <option value="1">صور السيارة</option>
-              <option value="1">صور خاصة</option>
+              <option value="2">صور خاصة</option>
             </select>
           </div>
 
@@ -239,6 +237,19 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
             <h6 class="is-require">رقم اللوحــة</h6>
             <input type="text" class="form-control custom-select px-4 mb-3" style="height: 50px; width: 100%;"  id="car_number" name="car_number" placeholder="">
           </div>
+
+          <div class="col-lg-12 col-md-12 px-2 pull-right uploads-images d-none">
+            <h6 class="is-require">صور السيارة</h6>
+            <form id="galleries" class="form" method="post" action="" enctype="multipart/form-data">
+              <label for="galleriesfield">
+                <span>دوس هنا لرفع الصور  <i class="fa fa-cloud-upload" aria-hidden="true"></i></span> 
+              </label>
+              <input type="file" id="galleriesfield" name="galleriesfield[]" accept="image/*" class="form-control hidden" value="" multiple>
+              <?php wp_nonce_field( 'myuploadnonce', 'mynonce' );?>
+              <button type="submit" class="btn btn-primary">رفع</button>
+            </form>
+          </div>
+
         </div>
 
 
@@ -438,22 +449,67 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
       }
     });
 
+
+    // change Gallery Cars
+    $('body').on('change', '#car_img', function() {
+      var tag_id = $('#car_img').find(":selected").val();
+      if(tag_id == 2) {
+        $('.uploads-images').removeClass('d-none');
+      } else {
+        $('.uploads-images').addClass('d-none');
+      }
+    });
+
+    //galleries 
+      var galleries = $('#galleries');
+      $(galleries).submit(function(e) {
+        e.preventDefault();
+        var galleriesData = new FormData(galleries[0]);
+        galleriesData.append('action', 'pn_wp_frontend_galleries_ajax_upload');
+        $.ajax({
+            type: "POST",
+            data: galleriesData,
+            dataType: "json",
+            url: "<?= admin_url( 'admin-ajax.php' ); ?>",
+            cache: false,
+            processData: false,
+            contentType: false,
+            enctype: 'multipart/form-data',
+            beforeSend: function () {
+              $('.loading').show();
+              $(".galleries").html('');
+            },
+            success: function(response) {
+              console.log(response);
+              $(".galleries").html(response.responseText);
+              $('.loading').hide();
+            },
+            error: function(response){
+              $('.loading').hide();
+              console.log(response);
+              $(".galleries").html(response.responseText);
+            }
+        });
+      });
+
     // get car add new car
     $('#submit').on('click', function () {
-      var car_id = $('#cars').find(":selected").val();
-      var car_tag = $('#car_tag').find(":selected").val();
-      var car_model = $('#car_model').find(":selected").val();
-      var car_price = $('#car_price').val();
-      var car_color = $('#car_color').val();
-      var car_name = $('#car_name').val();
-      
-      var car_km = $('#car_km').val();
-      var car_number = $('#car_number').val();
+      var car_id        = $('#cars').find(":selected").val();
+      var car_tag       = $('#car_tag').find(":selected").val();
+      var car_model     = $('#car_model').find(":selected").val();
+      var car_price     = $('#car_price').val();
+      var car_color     = $('#car_color').val();
+      var car_name      = $('#car_name').val();
+      var car_km        = $('#car_km').val();
+      var car_number    = $('#car_number').val();
+      var featured_img  = $('input[name="featured_img"]').val();
+      var galleries     = $("input[name='galleries[]']").map(function(){return $(this).val();}).get();
 
       if(car_id == 0 || car_tag == 0 || car_model == 0 || car_price == '' || car_color == '' || car_name == '') {
         alert('الرجاء اكمل الحقول ');
         return false;
       }
+
       var action = 'get_add_new_car';
       $.ajax({
         url: "<?= admin_url( 'admin-ajax.php' ); ?>",
@@ -468,6 +524,8 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
           car_name: car_name,
           car_km: car_km,
           car_number: car_number,
+          galleries: galleries,
+          featured_img: featured_img
         },
         beforeSend: function () {
           $('#car_specifications').html("");
@@ -697,6 +755,41 @@ $user_logo_Bg = get_field('user_background', 'user_'. $current_user->ID);
   .uploads img {
       max-width: 100%;
   }
+
+  form#galleries label {
+      border: 1px solid #ccc;
+      padding: 30px;
+      cursor: pointer;
+  }
+
+  form#galleries .btn {
+      display: block;
+      margin: 10px 0;
+  }
+
+  form#galleries label i {
+      display: block;
+      margin: 10px auto;
+      text-align: center;
+  }  
+
+  .images .featured-img {
+      flex: 0 0 25%;
+  }
+
+  .images .galleries {
+      flex: 0 0 75%;
+      display: flex;
+      flex-wrap: wrap;
+  }
+
+  .images .galleries div {
+      flex: 0 0 25%;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 5px;
+      border: 0;
+  }  
 </style>
 <?php 
   get_footer();

@@ -492,10 +492,14 @@ function ajax_get_basic_specifications() {
       <div class="col-lg-12 px-2">
         <h6>الصور <span>(اول صورة هي الصورة الرئيسية)</span></h6>
         <div class="images">
-          <div><img class="img-fluid" src="<?= $featured_img_url; ?>" alt="<?= the_title(); ?>"></div>
-          <?php foreach( $images as $image ): ?>
-            <div><img src="<?= $image['url']; ?>" alt="slide"></div>
-          <?php endforeach; ?>
+          <div class="featured-img"><img class="img-fluid" src="<?= $featured_img_url; ?>" alt="<?= the_title(); ?>"></div>
+          <input type="hidden" name="featured_img" value="<?= $featured_img_id; ?>">          
+          <div class="galleries">            
+            <?php foreach( $images as $image ): ?>
+              <input type="hidden" name="galleries[]" value="<?= $image['id']; ?>">
+              <div><img src="<?= $image['url']; ?>" alt="slide"></div>
+            <?php endforeach; ?>
+          </div>
         </div>
       </div>
 
@@ -589,6 +593,9 @@ function get_add_new_car() {
   $car_number = $_POST['car_number'];
 
 
+  $galleries = $_POST['galleries'];
+  $featured_img = $_POST['featured_img'];
+
   $current_user = wp_get_current_user();
   $author_id = $current_user->ID;
 
@@ -613,7 +620,10 @@ function get_add_new_car() {
       update_field('color_car', $car_color, $post_id);
       update_field('km_car', $car_km, $post_id);
       update_field('number_car', $car_number, $post_id);
+      update_field('car_galleries', $galleries , $post_id);
       
+      set_post_thumbnail($post_id, $featured_img);
+
       // UPDATE TAXONOMY
       wp_set_post_terms( $post_id, $car_tag, 'products-tag' );
       wp_set_post_terms( $post_id, $car_model, 'products-model' );
@@ -1292,3 +1302,50 @@ function pn_upload_files() {
 //Hook our function to the action we set at jQuery code
 add_action( 'wp_ajax_pn_wp_frontend_ajax_upload', 'pn_upload_files');
 add_action( 'wp_ajax_nopriv_pn_wp_frontend_ajax_upload', 'pn_upload_files');
+
+
+function pn_galleries_upload_files() {
+  //Do the nonce security check
+
+  $current_user = wp_get_current_user();
+  
+  if ( !isset($_POST['mynonce']) || !wp_verify_nonce( $_POST['mynonce'], 'myuploadnonce' ) ) {
+    //Send the security check failed message
+    _e( 'Security Check Failed', 'pixelnet' ); 
+  } else {
+
+    //Security check cleared, let's proceed
+    //If your form has other fields, process them here.
+    if ( isset($_FILES) && !empty($_FILES) ) {
+      //Include the required files from backend
+      require_once( ABSPATH . 'wp-admin/includes/image.php' );
+      require_once( ABSPATH . 'wp-admin/includes/file.php' );
+      require_once( ABSPATH . 'wp-admin/includes/media.php' );
+
+      $files = $_FILES["galleriesfield"];  
+      foreach ($files['name'] as $key => $value) {   
+        if ($files['name'][$key]) { 
+          $file = array( 
+            'name' => $files['name'][$key],
+            'type' => $files['type'][$key], 
+            'tmp_name' => $files['tmp_name'][$key], 
+            'error' => $files['error'][$key],
+            'size' => $files['size'][$key]
+          ); 
+          $_FILES = array ("galleriesfield" => $file); 
+          $file_id = media_handle_upload( 'galleriesfield', 0 );  
+          $attachment_image = wp_get_attachment_url( $file_id );
+           ?>
+            <input type="hidden" name="galleries[]" value="<?= $file_id; ?>">
+            <div><img src="<?= $attachment_image; ?>" alt="slide"></div>
+           <?php
+        } 
+      }
+    }
+  }
+  die();
+}
+
+//Hook our function to the action we set at jQuery code
+add_action( 'wp_ajax_pn_wp_frontend_galleries_ajax_upload', 'pn_galleries_upload_files');
+add_action( 'wp_ajax_nopriv_pn_wp_frontend_galleries_ajax_upload', 'pn_galleries_upload_files');
