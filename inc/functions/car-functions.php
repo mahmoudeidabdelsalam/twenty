@@ -1349,3 +1349,30 @@ function pn_galleries_upload_files() {
 //Hook our function to the action we set at jQuery code
 add_action( 'wp_ajax_pn_wp_frontend_galleries_ajax_upload', 'pn_galleries_upload_files');
 add_action( 'wp_ajax_nopriv_pn_wp_frontend_galleries_ajax_upload', 'pn_galleries_upload_files');
+
+
+add_filter('acf/fields/relationship/result', 'my_acf_fields_relationship_result', 10, 4);
+function my_acf_fields_relationship_result( $text, $post, $field, $post_id ) {
+  
+  $author_id = get_post_field( 'post_author', $post->ID );
+  $author_name = get_the_author_meta( 'display_name', $author_id );
+
+    $text .= ' ' . sprintf( '(%s)', $author_name );
+
+    return $text;
+}
+
+
+// add_action( 'init', function(){
+//     add_permastruct( '%author_vendor%', 'operator/%author%', [
+//         'ep_mask' => EP_AUTHORS,
+//     ] );
+// } );
+
+add_filter( 'author_link', function( $link, $author_id, $author_nicename ){
+    if ( user_can( $author_id, 'vendor' ) ) {
+        $link = '/author/' . $author_nicename;
+        $link = home_url( user_trailingslashit( $link ) );
+    }
+    return $link;
+}, 10, 3 );
